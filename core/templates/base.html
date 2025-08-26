@@ -37,27 +37,30 @@
     {% endblock %}
 
     <script>
-      async function fetchWithRetry(url, retries = 3, delay = 2000) {
+      async function fetchWithRetry(url, retries = 5, delay = 2000) {
         for (let i = 0; i < retries; i++) {
           try {
             const res = await fetch(url);
-            if (!res.ok) throw new Error("Failed");
-            return await res.json();
+            if (!res.ok) throw new Error("Server not ready");
+            const data = await res.json();
+            console.log("Server ready:", data);
+            return data;
           } catch (err) {
+            console.log(`Retrying ${i+1}/${retries}...`, err);
             if (i < retries - 1) {
-              await new Promise((r) => setTimeout(r, delay));
+              await new Promise(r => setTimeout(r, delay));
             } else {
-              console.error("Server didn't wake up in time:", err);
+              console.error("Server failed to wake in time.");
             }
           }
         }
       }
 
+      // Call it when the page loads
       document.addEventListener("DOMContentLoaded", () => {
-        fetchWithRetry("/ping", 3, 2000)
-          .then((data) => console.log("Server ready:", data))
-          .catch((err) => console.error("Error:", err));
+        fetchWithRetry("/ping", 5, 2000);
       });
     </script>
+
   </body>
 </html>

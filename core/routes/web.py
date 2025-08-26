@@ -1,6 +1,7 @@
 # core/routes/web.py
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for, flash
 from flask_login import current_user, login_required
+from sqlalchemy.exc import OperationalError
 from core.extensions import db
 from core.models import Reviews
 import requests
@@ -154,9 +155,10 @@ def manage_review(review_id):
 
 @web.route("/ping")
 def ping():
+    """Check if the web app and DB are awake."""
     try:
-        # Simple lightweight query
+        # Lightweight query to wake up Postgres
         db.session.execute("SELECT 1")
-        return {"status": "ok", "db": "ready"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}, 500
+        return jsonify({"status": "ok", "db": "ready"})
+    except OperationalError:
+        return jsonify({"status": "error", "db": "sleeping"}), 503
