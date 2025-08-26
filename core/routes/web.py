@@ -2,6 +2,7 @@
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for, flash
 from flask_login import current_user, login_required
 from sqlalchemy.exc import OperationalError
+from sqlalchemy import text
 from core.extensions import db
 from core.models import Reviews
 import requests
@@ -158,7 +159,7 @@ def ping():
     """Check if the web app and DB are awake."""
     try:
         # Lightweight query to wake up Postgres
-        db.session.execute("SELECT 1")
+        db.session.execute(text("SELECT 1"))
         return jsonify({"status": "ok", "db": "ready"})
     except OperationalError:
         return jsonify({"status": "error", "db": "sleeping"}), 503
