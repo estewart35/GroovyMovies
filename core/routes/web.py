@@ -150,3 +150,8 @@ def manage_review(review_id):
       flash("Invalid action.", "error")
 
    return redirect(url_for("web.movie_details", movie_id=review.movie_id))
+
+
+@web.route("/ping")
+def ping():
+    return jsonify({"status": "ok"})
