@@ -154,4 +154,9 @@ def manage_review(review_id):
 
 @web.route("/ping")
 def ping():
-    return jsonify({"status": "ok"})
+    try:
+        # Simple lightweight query
+        db.session.execute("SELECT 1")
+        return {"status": "ok", "db": "ready"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
