@@ -5,7 +5,21 @@ from core.extensions import db, login_manager, migrate
 from core.routes.web import web
 from datetime import timedelta
 from sqlalchemy.exc import OperationalError
+from sqlalchemy import text
 import os, time
+
+def wake_db(app, retries=5, delay=2):
+    """Attempt to wake up the DB on app startup."""
+    with app.app_context():
+        for i in range(retries):
+            try:
+                db.session.execute(text("SELECT 1"))
+                print("✅ Database awake!")
+                return
+            except OperationalError:
+                print(f"⏳ Waiting for DB... attempt {i+1}/{retries}")
+                time.sleep(delay)
+        print("❌ Could not connect to DB after retries")
 
 
 def create_app(environment="production"):
@@ -33,20 +47,7 @@ def create_app(environment="production"):
     app.register_blueprint(auth)
     app.register_blueprint(web)
 
-    # ---- Wake up DB before first real request ----
-    @app.before_first_request
-    def wake_db():
-        retries = 5
-        delay = 2
-        for i in range(retries):
-            try:
-                with app.app_context():
-                    db.session.execute(db.text("SELECT 1"))
-                print("✅ Database is awake!")
-                return
-            except OperationalError:
-                print(f"⏳ Waiting for DB... attempt {i+1}/{retries}")
-                time.sleep(delay)
-        print("❌ Could not connect to DB after retries")
+    # Wake up DB immediately on app startup
+    wake_db(app)
 
     return app
